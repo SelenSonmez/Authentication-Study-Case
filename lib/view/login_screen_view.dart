@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:login_study_case/controllers/authentication_controller.dart';
+import 'package:mvc_pattern/mvc_pattern.dart';
 
-class LoginScreenView extends StatelessWidget {
+class LoginScreenView extends StatefulWidget {
   const LoginScreenView({super.key});
 
+  @override
+  _LoginScreenViewState createState() => _LoginScreenViewState();
+}
+
+class _LoginScreenViewState extends StateMVC<LoginScreenView> {
+  late AuthenticationController _authenticationController;
+
+  _LoginScreenViewState() : super(AuthenticationController()) {
+    _authenticationController = controller as AuthenticationController;
+  }
   @override
   Widget build(BuildContext context) {
     // Get device width and height for responsive design
@@ -10,6 +22,7 @@ class LoginScreenView extends StatelessWidget {
     final deviceHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      key: _authenticationController.scaffoldKey,
       body: Center(
           child: Stack(
         children: [
@@ -44,28 +57,46 @@ class LoginScreenView extends StatelessWidget {
                   color: Colors.white, borderRadius: BorderRadius.circular(25)),
               child: Padding(
                 padding: const EdgeInsets.all(15),
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            label: Text("username"), icon: Icon(Icons.people)),
-                      ),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                            label: Text("password"), icon: Icon(Icons.lock)),
-                      ),
+                child: Form(
+                  key: _authenticationController.formKey,
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextFormField(
+                          validator: (value) =>
+                              value!.isEmpty ? "username can't be empty" : null,
+                          onSaved: (newValue) {
+                            _authenticationController.userModel.firstName =
+                                newValue;
+                          },
+                          decoration: const InputDecoration(
+                              label: Text("username"),
+                              icon: Icon(Icons.people)),
+                        ),
+                        TextFormField(
+                          validator: (value) =>
+                              value!.isEmpty ? "password can't be empty" : null,
+                          onSaved: (newValue) {
+                            _authenticationController.userModel.password =
+                                newValue;
+                          },
+                          decoration: const InputDecoration(
+                              label: Text("password"), icon: Icon(Icons.lock)),
+                        ),
 
-                      //Sign in button
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple.shade100,
-                            minimumSize:
-                                Size(deviceWidth / 1.1, deviceHeight / 15)),
-                        child: const Text("Sign In"),
-                      )
-                    ]),
+                        //Sign in button
+                        ElevatedButton(
+                          onPressed: () {
+                            _authenticationController.formValidate();
+                          },
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple.shade100,
+                              minimumSize:
+                                  Size(deviceWidth / 1.1, deviceHeight / 15)),
+                          child: const Text("Sign In"),
+                        )
+                      ]),
+                ),
               ),
             ),
           )
