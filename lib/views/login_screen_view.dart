@@ -1,20 +1,52 @@
 import 'package:flutter/material.dart';
-import 'package:login_study_case/controllers/authentication_controller.dart';
-import 'package:mvc_pattern/mvc_pattern.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:login_study_case/app_router.dart';
+import 'package:login_study_case/controllers/user_controller.dart';
+import 'package:login_study_case/controllers/form_validator_controller.dart';
 
-class LoginScreenView extends StatefulWidget {
+class LoginScreenView extends ConsumerStatefulWidget {
   const LoginScreenView({super.key});
 
   @override
-  _LoginScreenViewState createState() => _LoginScreenViewState();
+  LoginScreenViewState createState() => LoginScreenViewState();
 }
 
-class _LoginScreenViewState extends StateMVC<LoginScreenView> {
-  late AuthenticationController _authenticationController;
+class LoginScreenViewState extends ConsumerState<LoginScreenView> {
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+  late GlobalKey<FormState> _formKey;
 
-  _LoginScreenViewState() : super(AuthenticationController()) {
-    _authenticationController = controller as AuthenticationController;
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    _formKey = GlobalKey<FormState>();
   }
+
+  void handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      Map<String, dynamic> credentials = {
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      };
+      try {
+        final userModel =
+            await ref.watch(userModelProvider(credentials).future);
+        if (userModel.token != null && context.mounted) {
+          context.goNamed(AppRoutes.atendeeList.name);
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(e.toString().replaceAll("Exception: ", ""))));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get device width and height for responsive design
@@ -22,7 +54,6 @@ class _LoginScreenViewState extends StateMVC<LoginScreenView> {
     final deviceHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      key: _authenticationController.scaffoldKey,
       body: Center(
           child: Stack(
         children: [
@@ -31,9 +62,9 @@ class _LoginScreenViewState extends StateMVC<LoginScreenView> {
           //Purple header with rounded corners
           Container(
             height: MediaQuery.of(context).size.height / 2.75,
-            decoration: const BoxDecoration(
-                color: Colors.deepPurple,
-                borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+                color: Colors.deepPurple.shade400,
+                borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(25),
                     bottomRight: Radius.circular(25))),
           ),
@@ -58,37 +89,26 @@ class _LoginScreenViewState extends StateMVC<LoginScreenView> {
               child: Padding(
                 padding: const EdgeInsets.all(15),
                 child: Form(
-                  key: _authenticationController.formKey,
+                  key: _formKey,
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         TextFormField(
-                          validator: (value) =>
-                              value!.isEmpty ? "username can't be empty" : null,
-                          onSaved: (newValue) {
-                            _authenticationController.userModel.firstName =
-                                newValue;
-                          },
+                          controller: _emailController,
+                          validator: FormValidatorController.validateEmail,
                           decoration: const InputDecoration(
-                              label: Text("username"),
-                              icon: Icon(Icons.people)),
+                              label: Text("email"), icon: Icon(Icons.people)),
                         ),
                         TextFormField(
-                          validator: (value) =>
-                              value!.isEmpty ? "password can't be empty" : null,
-                          onSaved: (newValue) {
-                            _authenticationController.userModel.password =
-                                newValue;
-                          },
+                          controller: _passwordController,
+                          validator: FormValidatorController.validatePassword,
                           decoration: const InputDecoration(
                               label: Text("password"), icon: Icon(Icons.lock)),
                         ),
 
                         //Sign in button
                         ElevatedButton(
-                          onPressed: () {
-                            _authenticationController.formValidate();
-                          },
+                          onPressed: () async => handleLogin(),
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.deepPurple.shade100,
                               minimumSize:
