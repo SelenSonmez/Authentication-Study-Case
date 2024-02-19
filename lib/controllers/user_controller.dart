@@ -1,6 +1,6 @@
 import 'package:login_study_case/models/atendee_model.dart';
 import 'package:login_study_case/models/user_model.dart';
-import 'package:login_study_case/services/auth_service.dart';
+import 'package:login_study_case/services/user_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'user_controller.g.dart';

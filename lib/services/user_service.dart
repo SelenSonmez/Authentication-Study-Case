@@ -22,10 +22,10 @@ class AuthService {
         TokenPreferenceController.setToken(userModel.token!);
         return UserModel.fromJson(response.body);
       } else {
-        throw Exception("An error occured in logging process");
+        throw Exception("User not found");
       }
     } catch (error) {
-      throw Exception("An error occured in logging process");
+      throw Exception("User not found");
     }
   }
 
